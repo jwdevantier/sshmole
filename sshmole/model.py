@@ -56,7 +56,6 @@ class Endpoint(BaseModel):
 
     @validator("exclude_subnets", each_item=True)
     def validate_exclude_subnet_entries(cls, v):
-        print(f"EXCL ITEM ({v.strip()})")
         return str(ipaddress.ip_network(v.strip()))
 
     @validator("exclude_subnets", always=True)
@@ -102,7 +101,14 @@ class Endpoint(BaseModel):
 
 class Config(BaseModel):
     python: str = Field(default="python")
+    sshuttle_dir: Path = Field(default_factory=lambda: Path.home() / ".sshuttle")
     endpoints: List[Endpoint]
+
+    @validator("sshuttle_dir", always=True)
+    def if_exists_is_directory(cls, v):
+        if v.exists() and not v.is_dir():
+            raise ValueError("path exists, but is not a directory")
+        return v
 
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
