@@ -1,5 +1,5 @@
 from sshmole.model import Config
-from sshmole.cli import md5sum, cwd, py3_fpath, py_has_venv
+from sshmole.cliutils import md5sum, cwd, py3_fpath, py_has_venv
 import shutil
 import subprocess
 import getpass

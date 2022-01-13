@@ -4,6 +4,24 @@ from pathlib import Path
 import ipaddress
 import socket
 import yaml
+from sshconf import read_ssh_config
+
+
+def get_hostname(remote: str) -> str:
+    try:
+        return socket.gethostbyname(remote)
+    except socket.gaierror as e:
+        # -5 -> no address associated with hostname
+        # in this case, try to resolve hostname from reading ssh config
+        if e.errno != -5:
+            raise e
+
+    c = read_ssh_config(Path.home() / ".ssh" / "config")
+    if not remote in c.hosts():
+        raise Exception(f"invalid remote, it is neither a valid DNS hostname nor an alias for a config entry in ~/.ssh/config")
+
+    return get_hostname(c.host(remote)["hostname"])
+
 
 
 class Endpoint(BaseModel):
@@ -61,7 +79,7 @@ class Endpoint(BaseModel):
     @validator("exclude_subnets", always=True)
     def ensure_exclude_own_addr(cls, v, values):
         # determine address of remote itself...
-        rhost_addr = socket.gethostbyname(values["remote"])
+        rhost_addr = get_hostname(values["remote"])
 
         # if address of remote is not in exclude list, add it.
         if len({rhost_addr, f"{rhost_addr}/32"}.intersection(v)) == 0:
@@ -117,3 +135,14 @@ ModelType = TypeVar("ModelType", bound=BaseModel)
 def read_yaml_config(model: Type[ModelType], fpath: Union[Path, str]) -> ModelType:
     with open(fpath, "r") as fp:
         return model(**yaml.safe_load(fp))
+
+
+def all_endpoints_names(config: Config) -> List[str]:
+    return [endpoint.name for endpoint in config.endpoints]
+
+
+def get_endpoint(config: Config, profile: str) -> Endpoint:
+    for endpoint in config.endpoints:
+        if endpoint.name == profile:
+            return endpoint
+    raise Exception(f"No endpoint by name '{profile}'")

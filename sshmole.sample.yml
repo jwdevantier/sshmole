@@ -1,0 +1,30 @@
+# See example below, but consult `sshmole/model.py` to see the full list of options
+
+# uncomment and set to the directory into which you wish to install sshuttle
+# (default is: ~/.sshuttle)
+# sshuttle_dir: /home/myuser/.sshuttle
+endpoints:
+  # name of profile, used in various commands such as
+  # `sshmole.py start PROFILE`
+  - name: home
+    # remote ssh server, use aliases in ~/.ssh/config to configure
+    # how to connect to the remote server
+    remote: gateway.example.com
+    # bool - set to true IF you want to forward ALL DNS requests to the endpoint
+    forward_dns_requests: false
+    # define which subnets should be accessed through this server
+    # supports single IPv4/IPv6 IP's or IPv4/IPv6 CIDR ranges
+    subnets:
+      - 192.168.2.0/24
+    # can use `auto_hosts: true` to scan destination network for hostname entries and
+    # add them to the local /etc/hosts file for the duration which you remain connected.
+    #
+    # can also add a list of seed hosts to consult when creating entries - as part of
+    # consulting these hosts, they themselves are also added.
+    # (TL;DR - can add entries here to explicitly map these (and domain names they contain))
+    seed_hosts:
+      - kvmserver
+      - webserver
+    # define subnets for which requests should *NOT* be routed through this endpoint
+    exclude_subnets:
+      - 192.168.3.0/24
