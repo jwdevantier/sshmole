@@ -47,7 +47,7 @@ def py3_fpath(val: Optional[str] = None) -> Optional[str]:
             return None
         return val if _is_python_3(Path(val)) else None
 
-    for val in ["python", "python3"]:
+    for val in ["python3", "python"]:
         py_path = shutil.which(val)
         if not py_path:
             continue
