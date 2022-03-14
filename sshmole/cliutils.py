@@ -81,9 +81,6 @@ def is_pid_running(pid: int) -> bool:
 
 
 def sshuttle_popen(config: Config, args: List[str], **kwargs) -> subprocess.Popen:
-    print("shuttle_popen")
-    print(repr(args))
-    print(repr(kwargs))
     bash = shutil.which("bash")
     if not bash:
         raise Exception("cannot find 'bash' shell, needed to run commands in context of sshuttle's virtual environment")
