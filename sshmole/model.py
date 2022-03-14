@@ -7,6 +7,12 @@ import yaml
 from sshconf import read_ssh_config
 
 
+class InvalidRemoteError(Exception):
+    def __init__(self, remote: str):
+        self.remote = remote
+        super().__init__(f"warning: invalid remote '{remote}', it is neither a valid DNS hostname nor an alias for a config entry in ~/.ssh/config")
+
+
 def get_hostname(remote: str) -> str:
     try:
         return socket.gethostbyname(remote)
@@ -18,10 +24,9 @@ def get_hostname(remote: str) -> str:
 
     c = read_ssh_config(Path.home() / ".ssh" / "config")
     if not remote in c.hosts():
-        raise Exception(f"invalid remote, it is neither a valid DNS hostname nor an alias for a config entry in ~/.ssh/config")
+        raise InvalidRemoteError(remote)
 
     return get_hostname(c.host(remote)["hostname"])
-
 
 
 class Endpoint(BaseModel):
@@ -78,12 +83,15 @@ class Endpoint(BaseModel):
 
     @validator("exclude_subnets", always=True)
     def ensure_exclude_own_addr(cls, v, values):
-        # determine address of remote itself...
-        rhost_addr = get_hostname(values["remote"])
+        try:
+            # determine address of remote itself...
+            rhost_addr = get_hostname(values["remote"])
 
-        # if address of remote is not in exclude list, add it.
-        if len({rhost_addr, f"{rhost_addr}/32"}.intersection(v)) == 0:
-            v.append(f"{rhost_addr}/32")
+            # if address of remote is not in exclude list, add it.
+            if len({rhost_addr, f"{rhost_addr}/32"}.intersection(v)) == 0:
+                v.append(f"{rhost_addr}/32")
+        except InvalidRemoteError as e:
+            print(e, end="\n\n")
         return v
 
     @property
