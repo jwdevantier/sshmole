@@ -51,7 +51,8 @@ def _stop_profile(profile: str):
         time.sleep(1)
     print("", flush=True)
 
-    fpath.unlink(missing_ok=True)
+    if fpath.exists():
+        fpath.unlink()
 
 
 @app.command("start")
