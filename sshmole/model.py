@@ -125,7 +125,7 @@ class Endpoint(BaseModel):
 
 
 class Config(BaseModel):
-    python: str = Field(default="python")
+    python: str = Field(default="python3")
     sshuttle_dir: Path = Field(default_factory=lambda: Path.home() / ".sshuttle")
     endpoints: List[Endpoint]
 
