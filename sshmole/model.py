@@ -17,10 +17,9 @@ def get_hostname(remote: str) -> str:
     try:
         return socket.gethostbyname(remote)
     except socket.gaierror as e:
-        # -5 -> no address associated with hostname
-        # in this case, try to resolve hostname from reading ssh config
-        if e.errno != -5:
-            raise e
+        # may be because the remote is not a legitimate domain name.
+        # try reading aliases from ssh config instead.
+        pass
 
     c = read_ssh_config(Path.home() / ".ssh" / "config")
     if not remote in c.hosts():
