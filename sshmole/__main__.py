@@ -25,11 +25,12 @@ def profile_pid(profile: str) -> Optional[int]:
     return cliutils.pidfile_read(fpath)
 
 
-def _start_profile(profile: str) -> subprocess.Popen:
+def _start_profile(profile: str, foreground=False) -> subprocess.Popen:
     endpoint = get_endpoint(_config, profile)
     with cliutils.cwd(_config.sshuttle_dir):
         args = endpoint.sshuttle_args
-        args.extend(["--daemon", "--pidfile", str(_profile_pidfile_path(profile).absolute())])
+        if not foreground:
+            args.extend(["--daemon", "--pidfile", str(_profile_pidfile_path(profile).absolute())])
         # TODO: check that we're not stuck on sudo
         # TODO: wait for tunnel to start... (check on output method)
         return cliutils.sshuttle_popen(_config, args)
@@ -56,12 +57,15 @@ def _stop_profile(profile: str):
 
 
 @app.command("start")
-def start(profile: Optional[str] = typer.Argument(None)):
+def start(profile: Optional[str] = typer.Argument(None), foreground: bool =typer.Option(False, "--foreground", "-f", help="run in foreground mode")):
     """start all or specified profile"""
     print(f"start @ {_config}")
+    if foreground and not profile:
+        print("Foreground mode is only supported when starting a specific profile!")
+        sys.exit(1)
     endpoints = all_endpoints_names(_config) if not profile else [profile]
     for profile in endpoints:
-        _start_profile(profile)
+        _start_profile(profile, foreground=foreground)
 
 
 @app.command("stop")
