@@ -5,6 +5,8 @@ import ipaddress
 import socket
 import yaml
 from sshconf import read_ssh_config
+from sshmole.utils.wait import wait_for
+
 from sshmole.log import get_logger
 
 
@@ -18,12 +20,24 @@ class InvalidRemoteError(Exception):
 
 
 def get_hostname(remote: str) -> str:
-    try:
-        return socket.gethostbyname(remote)
-    except socket.gaierror as e:
-        # may be because the remote is not a legitimate domain name.
-        # try reading aliases from ssh config instead.
-        pass
+    hostname = ""
+
+    def _wait_fn():
+        nonlocal hostname
+        try:
+            logger.debug(f"gethostbyname(remote={remote!r})")
+            hostname = socket.gethostbyname(remote)
+            return
+        except socket.gaierror as e:
+            # may be because the remote is not a legitimate domain name.
+            # try reading aliases from ssh config instead.
+            pass
+
+    if wait_for(_wait_fn, 5) and hostname != "":
+        logger.debug(f"  resolved to: {hostname!r}")
+        return hostname
+    else:
+        logger.debug(f"  could not be resolved")
 
     c = read_ssh_config(Path.home() / ".ssh" / "config")
     if not remote in c.hosts():
