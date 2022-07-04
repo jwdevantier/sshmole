@@ -29,15 +29,18 @@ def profile_pid(profile: str) -> Optional[int]:
     return cliutils.pidfile_read(fpath)
 
 
-def _start_profile(profile: str, foreground=False) -> subprocess.Popen:
+def _start_profile(profile: str) -> subprocess.Popen:
     endpoint = get_endpoint(_config, profile)
     with cliutils.cwd(_config.sshuttle_dir):
         args = endpoint.sshuttle_args
-        if not foreground:
-            args.extend(["--daemon", "--pidfile", str(_profile_pidfile_path(profile).absolute())])
-        # TODO: check that we're not stuck on sudo
-        # TODO: wait for tunnel to start... (check on output method)
-        return cliutils.sshuttle_popen(_config, args)
+        pidfile = _profile_pidfile_path(profile).absolute()
+        try:
+            with open(pidfile, "w") as fp:
+                fp.write(f"{os.getpid()}")
+            return cliutils.sshuttle_popen(_config, args)
+        finally:
+            if pidfile.exists():
+                pidfile.unlink()
 
 
 def _stop_profile(profile: str):
@@ -61,36 +64,26 @@ def _stop_profile(profile: str):
 
 
 @app.command("start")
-def start(profile: Optional[str] = typer.Argument(None), foreground: bool =typer.Option(False, "--foreground", "-f", help="run in foreground mode")):
-    """start all or specified profile"""
-    print(f"start @ {_config}")
-    if foreground and not profile:
-        print("Foreground mode is only supported when starting a specific profile!")
-        sys.exit(1)
-    endpoints = all_endpoints_names(_config) if not profile else [profile]
-    for profile in endpoints:
-        _start_profile(profile, foreground=foreground)
+def start(profile: str = typer.Argument(..., help="profile to start")):
+    """start specified profile"""
+    _start_profile(profile)
 
 
 @app.command("stop")
-def stop(profile: Optional[str] = typer.Argument(None)):
-    """stop all or specified profile"""
-    endpoints = all_endpoints_names(_config) if not profile else [profile]
-    for profile in endpoints:
-        _stop_profile(profile)
+def stop(profile: str = typer.Argument(..., help="profile to stop")):
+    """stop specified profile"""
+    _stop_profile(profile)
 
 
 @app.command("restart")
-def restart(profile: Optional[str] = typer.Argument(None)):
-    """restart all or specified profile"""
-    endpoints = all_endpoints_names(_config) if not profile else [profile]
-    for profile in endpoints:
-        _stop_profile(profile)
-        _start_profile(profile)
+def restart(profile: str = typer.Argument(..., help="profile to restart")):
+    """restart specified profile"""
+    _stop_profile(profile)
+    _start_profile(profile)
 
 
 @app.command("status")
-def status(profile: Optional[str] = typer.Argument(None)):
+def status(profile: Optional[str] = typer.Argument(None, help="profile to query")):
     """see status of all or specified profile"""
     if profile:
         endpoints = [profile]

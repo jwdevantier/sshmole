@@ -94,4 +94,6 @@ def sshuttle_popen(config: Config, args: List[str], **kwargs) -> subprocess.Pope
         shell_args = [shlex.quote(arg) for arg in args]
         cmd = [bash, "-c", f"""source {activate_fpath}; sshuttle {" ".join(shell_args)}"""]
         print(" ".join(cmd))
-        return subprocess.Popen(cmd, **kwargs)
+        proc = subprocess.Popen(cmd, **kwargs)
+        proc.wait()
+        return proc
