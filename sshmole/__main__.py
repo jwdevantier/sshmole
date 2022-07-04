@@ -108,7 +108,7 @@ def setup_sshuttle():
 
 @app.callback()
 def _pre_command(
-        log_level: Optional[str] = typer.Option(None),
+        log_level: Optional[str] = typer.Option("info", help="set log level"),
         config: Path = Path.home() / ".sshmole.yml"):
     if log_level:
         log_level = log_level.upper()
