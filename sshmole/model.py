@@ -5,6 +5,10 @@ import ipaddress
 import socket
 import yaml
 from sshconf import read_ssh_config
+from sshmole.log import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class InvalidRemoteError(Exception):
@@ -141,7 +145,9 @@ ModelType = TypeVar("ModelType", bound=BaseModel)
 
 def read_yaml_config(model: Type[ModelType], fpath: Union[Path, str]) -> ModelType:
     with open(fpath, "r") as fp:
-        return model(**yaml.safe_load(fp))
+        raw_yaml = yaml.safe_load(fp)
+        logger.debug("reading yaml into model")
+        return model(**raw_yaml)
 
 
 def all_endpoints_names(config: Config) -> List[str]:

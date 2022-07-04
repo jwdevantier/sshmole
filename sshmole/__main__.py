@@ -8,10 +8,14 @@ import os
 import time
 from sshmole.model import all_endpoints_names, get_endpoint
 from sshmole import setup, model, cliutils
+from sshmole.log import get_logger, LogLevel, loggers_set_log_level
 
 app = typer.Typer()
 config_fpath: Path
 _config: model.Config
+
+
+logger = get_logger(__name__, LogLevel.INFO)
 
 
 def _profile_pidfile_path(profile: str) -> Path:
@@ -94,6 +98,7 @@ def status(profile: Optional[str] = typer.Argument(None)):
         endpoints = all_endpoints_names(_config)
 
     for profile in endpoints:
+        logger.debug(f"querying for status on profile {profile!r}")
         pid = profile_pid(profile)
         if cliutils.is_pid_running(pid) if pid is not None else False:
             profile_status = "ON"
@@ -109,9 +114,22 @@ def setup_sshuttle():
 
 
 @app.callback()
-def _pre_command(verbose: bool = False, config: Path = Path.home() / ".sshmole.yml"):
+def _pre_command(
+        log_level: Optional[str] = typer.Option(None),
+        config: Path = Path.home() / ".sshmole.yml"):
+    if log_level:
+        log_level = log_level.upper()
+        opts = LogLevel.__members__.keys()
+        if log_level not in opts:
+            str_opts = ", ".join(opts)
+            print(f"{log_level!r} not in {str_opts}")
+            sys.exit(1)
+        loggers_set_log_level(LogLevel[log_level])
+        logger.info(f"log-level set to {log_level!r}")
     global _config
+    logger.debug(f"reading config {config!r}")
     _config = model.read_yaml_config(model.Config, config)
+    logger.debug("finding python binary")
     _config.python = cliutils.py3_fpath(_config.python)
     if _config.python is None:
         raise ValueError("cannot resolve/find python")
@@ -119,8 +137,6 @@ def _pre_command(verbose: bool = False, config: Path = Path.home() / ".sshmole.y
 
 def main():
     # default to showing usage information.
-    if len(sys.argv) == 1:
-        sys.argv.append("--help")
     app()
 
 
