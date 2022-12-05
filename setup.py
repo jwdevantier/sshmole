@@ -9,7 +9,7 @@ def get_requirements():
 
 setup(
     name="sshmole",
-    packages=["sshmole"],
+    packages=["sshmole", "sshmole.utils"],
     version="0.1.0",
     description="manager for sshuttle tunnelling tool",
     author="Jesper Wendel Devantier",
