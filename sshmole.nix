@@ -2,6 +2,7 @@
 , fetchFromGithub
 , sshuttle
 , sshconf
+, unixtools
 }:
 let
   buildPythonPackage = python3Packages.buildPythonPackage;
@@ -17,7 +18,7 @@ in
     # };
     src = ./.;
     doCheck = false;
-    buildInputs = [ sshuttle sshconf ];
+    buildInputs = [ sshuttle sshconf unixtools.netstat ];
     propagatedBuildInputs = with python3Packages; [
       click
       pydantic
