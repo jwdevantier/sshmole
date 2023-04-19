@@ -1,6 +1,6 @@
-click==8.0.3
-pydantic==1.8.2
-PyYAML==6.0
-typer==0.4.0
-typing-extensions==4.0.1
-sshconf==0.2.2
+click>=8.1.3,<8.2
+pydantic>=1.9.2
+PyYAML>=6.0
+typer>=0.6.1
+typing-extensions==4.3.0
+sshconf>=0.2.2

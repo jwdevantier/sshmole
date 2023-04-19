@@ -84,6 +84,15 @@ def sshuttle_popen(config: Config, args: List[str], **kwargs) -> subprocess.Pope
     bash = shutil.which("bash")
     if not bash:
         raise Exception("cannot find 'bash' shell, needed to run commands in context of sshuttle's virtual environment")
+
+    if shutil.which("sshuttle"):
+        shell_args = [shlex.quote(arg) for arg in args]
+        cmd = [bash, "-c", f"""sshuttle {" ".join(shell_args)}"""]
+        print(" ".join(cmd))
+        proc = subprocess.Popen(cmd, **kwargs)
+        proc.wait()
+        return proc
+
     if not config.sshuttle_dir.exists():
         raise Exception("sshuttle is not installed, run setup-sshuttle command first, then re-try")
     venv_dir = config.sshuttle_dir / ".venv"
